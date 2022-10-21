@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import sys
 from logistic_regression import LogisticRegression
-from sklearn.metrics import r2_score
+# from sklearn.metrics import r2_score
 
 def get_df(path):
     try:
@@ -33,6 +33,15 @@ def label_one_vs_all(y, target, value):
     print(y.head())
     return y
 
+def binarise_y(y, treshold):
+	y = y.copy()
+	for i in range(0, len(y)):
+		if y[i][0] >= treshold:
+			y[i][0] = 1
+		else:
+			y[i][0] = 0
+	return y
+
 def get_reg(X, Y):
     thetas = np.zeros((X.shape[1] + 1, 1))
     reg = LogisticRegression(thetas, alpha=0.000000001, max_iter=500000000)
@@ -45,11 +54,12 @@ def perform_one_reg(X_train, Y_train, X_test, Y_test):
     reg = get_reg(X_train, Y_train)
     y_pred = reg.predict_(X_train)
     # print(y_pred.shape)
+    y_pred = binarise_y(y_pred, 0.5)
     print("Pred", np.unique(y_pred))
     # print(Y_test.shape)
     print(f"loss: {reg.loss_(Y_train, y_pred)}")
     print(f"Score: {reg.score_(Y_train, y_pred)}")
-    print(f"Sklearn score: {r2_score(Y_train, y_pred)}")
+    # print(f"Sklearn score: {r2_score(Y_train, y_pred)}")
     return reg
 
 def get_x(df, features, target):
@@ -59,7 +69,7 @@ def get_x(df, features, target):
 
 if __name__=="__main__":
 
-    one = "Slytherin"
+    one = "Ravenclaw"
 
     df = get_df("data/dataset_train.csv")
     df = df.dropna(axis=0).reset_index(drop=True)

@@ -102,5 +102,12 @@ class LogisticRegression():
 		"""
 			gives r2 score
 		"""
-		r2 = 1 - (((y - y_hat) * (y - y_hat)).sum() / (((y - y.mean()) * (y - y.mean())).sum()))
-		return r2
+		print(np.unique(y_hat))
+		eq = np.equal(y, y_hat)
+		# print(eq)
+		count = 0
+		for i in range(0, len(eq)):
+			if y[i][0] == y_hat[i][0]:
+				count +=1
+		print(count)
+		return count / len(y)
