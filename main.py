@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import sys
+import pickle
 from logistic_regression import LogisticRegression
 # from sklearn.metrics import r2_score
 
@@ -23,15 +24,25 @@ target = 'Hogwarts House'
 
 y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 
+export_path = "./models/"
+
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
-                    data_test_path="data/dataset_train.csv", y_labels=y_labels):
+                    test_split=False, y_labels=y_labels):
         self.features = features
         self.target = target
         self.y_labels = y_labels
 
+
         self.df_train, self.df_train_cleaned = self.parse_dfs(data_train_path)
-        self.df_test, self.df_test_cleaned = self.parse_dfs(data_test_path)
+
+        if test_split == False:
+            self.df_test = self.df_train
+            self.df_test_cleaned = self.df_train_cleaned
+
+        else:
+            # train test split
+            pass
         
         self.X_train = self.df_train_cleaned[features].to_numpy()
         self.X_test = self.df_test_cleaned[features].to_numpy()
@@ -76,15 +87,18 @@ class DataParser:
 
 
 class OneVersusAll:
-    def __init__(self, datas, y_label, reg_params={'alpha': 0.00000001, 'max_iter': 500000000}):
+    def __init__(self, datas, y_label, reg_params={'alpha': 0.00001, 'max_iter': 10000}, \
+                thetas=None):
         self.datas = datas
         self.reg_params = reg_params
         self.y_label = y_label
 
         self.Y_train = self.datas.Ys_train[self.y_label]
         self.Y_test = self.datas.Ys_test[self.y_label]
-        thetas = np.zeros((self.datas.X_train.shape[1] + 1, 1))
-        print(thetas.shape)
+        thetas = thetas
+
+        if thetas is None:
+            thetas = np.zeros((self.datas.X_train.shape[1] + 1, 1))
         self.reg = LogisticRegression(thetas, **reg_params)
     
     def train_reg(self):
@@ -121,27 +135,6 @@ class OneVersusAll:
 	    return y
 
 
-
-def get_reg(X, Y):
-    thetas = np.zeros((X.shape[1] + 1, 1))
-    reg = LogisticRegression(thetas, alpha=0.000000001, max_iter=500000000)
-    reg.fit_(X, Y)
-    # print("thetas: ", reg.thetas)
-    return reg
-
-def perform_one_reg(X_train, Y_train, X_test, Y_test):
-    # Y = binarise_y(Y_train, target_house)
-    reg = get_reg(X_train, Y_train)
-    y_pred = reg.predict_(X_train)
-    # print(y_pred.shape)
-    y_pred = binarise_y(y_pred, 0.5)
-    print("Pred", np.unique(y_pred))
-    # print(Y_test.shape)
-    print(f"loss: {reg.loss_(Y_train, y_pred)}")
-    print(f"Score: {reg.score_(Y_train, y_pred)}")
-    # print(f"Sklearn score: {r2_score(Y_train, y_pred)}")
-    return reg
-
 def get_x(df, features, target):
     X = df[features].to_numpy()
     # print("ici: ", X.shape)
@@ -150,6 +143,11 @@ def get_x(df, features, target):
 # class OneVsAll:
 #     def __init__(self, data_path="data/dataset_train.csv", features=features, target=target, \
 #                      )
+
+def export_models(ones, export_path=export_path):
+    with open(f"{export_path}/models", "wb") as f:
+        pickle.dump(ones, f)
+
 
 if __name__=="__main__":
     datas = DataParser()
@@ -166,6 +164,7 @@ if __name__=="__main__":
 
     preds = {}
     ones = {}
+    models = {}
     for i in range(0,len(y_labels)):
 
         print("--------------")
@@ -177,7 +176,43 @@ if __name__=="__main__":
         print(metrics)
         ones[y_labels[i]] = one
         preds[y_labels[i]] = one.get_pred()
+        models[y_labels[i]] = {
+            'thetas': one.reg.thetas,
+            'score': metrics['score'],
+            'reg_params': one.reg_params,
+            'y_label': one.y_label,
+        }
         print("-----------")
+    print(preds)
+    
+    final_pred = datas.df_Y_test.copy()
+    for i in range(0, len(final_pred)):
+        best = -1
+        for key in preds.keys():
+            if preds[key][i] > best:
+                # print(i)
+                best = preds[key][i]
+                best_key = key
+        # print(i, best_key)
+        final_pred[i] = best_key
+    # best_key
+    print(final_pred.head())
+
+    b = final_pred.to_numpy()
+    print(b)
+    b2 = datas.df_train_cleaned[target].to_numpy()
+    print(b.shape, b2.shape)
+
+    pos = 0
+    for i in range(0,len(final_pred)):
+        if b[i] == b2[i]:
+            pos += 1
+    score = pos / len(final_pred)
+    print(f"Score: {score}")
+
+    export_models(models)
+
+
 
     # one = "Ravenclaw"
 

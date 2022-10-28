@@ -26,8 +26,6 @@ def sigmoid_(x):
 	Raises:
 		This function should not raise any Exception.
 	"""
-	if type(x).__module__ != np.__name__:
-		return None
 	x = x.astype(float) 
 	sig = 1 / (1 + np.exp(-x))
 	return sig
@@ -39,8 +37,7 @@ class LogisticRegression():
 		self.max_iter = max_iter
 
 	def fit_(self, x, y):
-		print(x.shape, y.shape)
-		for i in range(0, 1):
+		for i in range(0, self.max_iter):
 			y_pred = self.predict_(x)
 			x_prime = add_intercept(x)
 			# print(np.dot(np.transpose(x_prime), y_pred - y))
