@@ -26,9 +26,35 @@ y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 
 export_path = "./models/"
 
+def data_spliter(x, y, proportion):
+	"""Shuffles and splits the dataset (given by x and y) into a training and a test set,
+		while respecting the given proportion of examples to be kept in the training set.
+	Args:
+		x: has to be an numpy.array, a matrix of dimension m * n.
+		y: has to be an numpy.array, a vector of dimension m * 1.
+		proportion: has to be a float, the proportion of the dataset that will be assigned to the
+		training set.
+	Return:
+		(x_train, x_test, y_train, y_test) as a tuple of numpy.array
+		None if x or y is an empty numpy.array.
+		None if x and y do not share compatible dimensions.
+		None if x, y or proportion is not of expected type.
+	Raises:
+		This function should not raise any Exception.
+	"""
+
+	df = np.concatenate((x, y), axis=1)
+	np.random.shuffle(df)
+	x_i = [*range(0, df.shape[1] - 1)]
+	x = df[:, x_i]
+	y = df[:, [x.shape[1]]]
+
+	p = int(len(x) * proportion)
+	return (x[:p], x[p:], y[:p], y[p:])
+
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
-                    test_split=False, y_labels=y_labels):
+                    test_split=False, ratio=None, y_labels=y_labels):
         self.features = features
         self.target = target
         self.y_labels = y_labels
@@ -41,8 +67,7 @@ class DataParser:
             self.df_test_cleaned = self.df_train_cleaned
 
         else:
-            # train test split
-            pass
+            self.split_df(ratio=ratio)
         
         self.X_train = self.df_train_cleaned[features].to_numpy()
         self.X_test = self.df_test_cleaned[features].to_numpy()
@@ -55,6 +80,18 @@ class DataParser:
 
         self.Ys_train = self.get_Ys(self.df_Y_train)
         self.Ys_test = self.get_Ys(self.df_Y_test)
+
+    def split_df(self, ratio):
+        if ratio == None:
+            ratio = 0.8
+        split = self.df_train_cleaned.sample(frac=ratio)
+        rest = self.df_train_cleaned.drop(split.index)
+        self.df_train_cleaned = split.reset_index()
+        self.df_test_cleaned = rest.reset_index()
+        print(self.df_train_cleaned.head())
+        print(self.df_train_cleaned.count())
+        print(self.df_test_cleaned.head())
+        print(self.df_test_cleaned.count())
 
     def get_Ys(self, Y_ori):
         b = {}
@@ -69,6 +106,7 @@ class DataParser:
 
     def label_one_vs_all(self, y, value):
         y = y.copy()
+        print(y.head())
         for i in range(0, len(y)):
             if y[i] == value:
                 y[i] = 1
@@ -150,7 +188,7 @@ def export_models(ones, export_path=export_path):
 
 
 if __name__=="__main__":
-    datas = DataParser()
+    datas = DataParser(test_split=True, ratio=0.8)
     print(datas.df_train.head())
     print(datas.df_train_cleaned.head())
     print(datas.df_Y_train.head())
@@ -183,8 +221,9 @@ if __name__=="__main__":
             'y_label': one.y_label,
         }
         print("-----------")
-    print(preds)
+    # print(preds)
     
+    # Tres tres moche
     final_pred = datas.df_Y_test.copy()
     for i in range(0, len(final_pred)):
         best = -1
@@ -201,7 +240,6 @@ if __name__=="__main__":
     b = final_pred.to_numpy()
     print(b)
     b2 = datas.df_train_cleaned[target].to_numpy()
-    print(b.shape, b2.shape)
 
     pos = 0
     for i in range(0,len(final_pred)):

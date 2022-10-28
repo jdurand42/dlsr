@@ -5,8 +5,6 @@ import pickle
 from logistic_regression import LogisticRegression
 from datetime import datetime
 
-from main import OneVersusAll
-
 export_path = "./models/models"
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H:%M:%S")
