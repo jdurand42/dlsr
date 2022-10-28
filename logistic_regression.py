@@ -111,3 +111,7 @@ class LogisticRegression():
 				count +=1
 		print(count)
 		return count / len(y)
+	
+	def r2_(self, y, y_hat):
+		r2 = 1 - (((y - y_hat) * (y - y_hat)).sum() / (((y - y.mean()) * (y - y.mean())).sum()))
+		return r2
