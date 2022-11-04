@@ -31,21 +31,34 @@ def sigmoid_(x):
 	return sig
 
 class LogisticRegression():
-	def __init__(self, thetas, alpha=0.001, max_iter=1000):
+	def __init__(self, thetas, alpha=0.001, max_iter=1000, stochastic=False):
 		self.alpha = alpha
 		self.thetas = thetas
 		self.max_iter = max_iter
+		self.stochastic = stochastic
 
 	def fit_(self, x, y):
-		for i in range(0, self.max_iter):
-			y_pred = self.predict_(x)
+
+		# lambda_ = 0.5
+		x_prime = add_intercept(x)
+		if self.stochastic == False:
+			for i in range(0, self.max_iter):
+				y_pred = self.predict_(x)
+				# thetas = self.thetas.copy()
+				# thetas[0][0] = 0
+				# print(np.dot(np.transpose(x_prime), y_pred - y))
+				j =  ((np.dot(np.transpose(x_prime), y_pred - y))) / len(y)
+				self.thetas = self.thetas - self.alpha * j
+				# if i == 0 or i == 1:
+				# 	print(j)
+				# # 
+		else:
 			x_prime = add_intercept(x)
-			# print(np.dot(np.transpose(x_prime), y_pred - y))
-			j =  (np.dot(np.transpose(x_prime), y_pred - y)) / len(y)
-			self.thetas = self.thetas - self.alpha * j
-			# if i == 0 or i == 1:
-			# 	print(j)
-			# # 
+			for i in range(0, self.max_iter):
+				for k in range(0, len(x)):
+					y_pred = self.predict_(x[k:k+1])
+					j = (np.dot(np.transpose(x_prime[k:k+1]), y_pred - y[k:k+1])) / 1
+					self.thetas = self.thetas - self.alpha * j
 		return self.thetas
 
 	def predict_(self, x):
@@ -99,9 +112,7 @@ class LogisticRegression():
 		"""
 			gives r2 score
 		"""
-		print(np.unique(y_hat))
 		eq = np.equal(y, y_hat)
-		# print(eq)
 		count = 0
 		for i in range(0, len(eq)):
 			if y[i][0] == y_hat[i][0]:

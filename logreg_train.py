@@ -3,6 +3,8 @@ import pandas as pd
 import sys
 import pickle
 from logistic_regression import LogisticRegression
+from sklearn.metrics import accuracy_score
+from TinyStatistician import TinyStatistician as Ts
 # from sklearn.metrics import r2_score
 
 def get_df(path):
@@ -17,7 +19,7 @@ def get_df(path):
 
 features = ['Herbology',
        'Defense Against the Dark Arts', 'Divination', 'Muggle Studies',
-       'Ancient Runes', 'History of Magic', 'Transfiguration', 'Potions',
+       'Ancient Runes', 'History of Magic', 'Transfiguration',
        'Charms', 'Flying']
 
 target = 'Hogwarts House'
@@ -36,20 +38,35 @@ def data_spliter(x, y, proportion):
 	p = int(len(x) * proportion)
 	return (x[:p], x[p:], y[:p], y[p:])
 
+def zscore(x, std):
+	# ts = Ts()
+	# mean = ts.mean(x)
+	x_prime = (x - x.mean()) / std
+	return x_prime
+
+
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
-                    test_split=False, ratio=0.8, y_labels=y_labels):
+                    test_split=False, ratio=None, y_labels=y_labels, normalize=False):
         self.features = features
         self.target = target
         self.y_labels = y_labels
+        # self.ts = Ts()
 
+        self.df_train= self.parse_dfs(data_train_path)
 
-        self.df_train, self.df_train_cleaned = self.parse_dfs(data_train_path)
+        self.df_train_cleaned = self.df_train[[target]+features]
+        
+        for col in self.df_train_cleaned[features]:
+            self.df_train_cleaned[col] = self.df_train_cleaned[col].fillna(value=self.df_train_cleaned[col].mean())
+        
+        print(self.df_train_cleaned.isna().count())
+
+        self.std = self.df_train_cleaned[self.features].to_numpy().std()
 
         if test_split == False:
             self.df_test = self.df_train
             self.df_test_cleaned = self.df_train_cleaned
-
         else:
             self.split_df(ratio=ratio)
         
@@ -65,6 +82,16 @@ class DataParser:
         self.Ys_train = self.get_Ys(self.df_Y_train)
         self.Ys_test = self.get_Ys(self.df_Y_test)
 
+        if normalize == True:
+            self.normalize()
+    
+    def normalize(self):
+        self.X_train = zscore(self.X_train, self.std)
+        self.X_test = zscore(self.X_test, self.std)
+        # print(self.X_train.head())
+        # print(self.X_test.head())
+
+
     def split_df(self, ratio):
         if ratio == None:
             ratio = 0.8
@@ -72,10 +99,11 @@ class DataParser:
         rest = self.df_train_cleaned.drop(split.index)
         self.df_train_cleaned = split.reset_index()
         self.df_test_cleaned = rest.reset_index()
-        print(self.df_train_cleaned.head())
-        print(self.df_train_cleaned.count())
-        print(self.df_test_cleaned.head())
-        print(self.df_test_cleaned.count())
+        # print("ici")
+        # print(self.df_train_cleaned.head())
+        # print(self.df_train_cleaned.count())
+        # print(self.df_test_cleaned.head())
+        # print(self.df_test_cleaned.count())
 
     def get_Ys(self, Y_ori):
         b = {}
@@ -85,12 +113,15 @@ class DataParser:
 
     def parse_dfs(self, path):
         df_raw = get_df(path)
-        df_cleaned = df_raw.dropna(axis=0).reset_index(drop=True)
-        return df_raw, df_cleaned
+        print("icici")
+        # print(len(df_raw))
+        # print(df_raw[target].isna().count())
+        # df_cleaned = df_raw.dropna(axis=0).reset_index(drop=True)
+        return df_raw
 
     def label_one_vs_all(self, y, value):
         y = y.copy()
-        print(y.head())
+        # print(y.head())
         for i in range(0, len(y)):
             if y[i] == value:
                 y[i] = 1
@@ -109,10 +140,10 @@ class DataParser:
 
 
 class OneVersusAll:
-    def __init__(self, datas, y_label, reg_params={'alpha': 0.00001, 'max_iter': 10000}, \
-                thetas=None):
+    def __init__(self, datas, y_label, alpha=0.00001, max_iter=10000, \
+                thetas=None, stochastic=False):
         self.datas = datas
-        self.reg_params = reg_params
+        self.reg_params = {'alpha': alpha, 'max_iter': max_iter, 'stochastic': stochastic}
         self.y_label = y_label
 
         self.Y_train = self.datas.Ys_train[self.y_label]
@@ -121,7 +152,7 @@ class OneVersusAll:
 
         if thetas is None:
             thetas = np.zeros((self.datas.X_train.shape[1] + 1, 1))
-        self.reg = LogisticRegression(thetas, **reg_params)
+        self.reg = LogisticRegression(thetas, alpha=alpha, max_iter=max_iter, stochastic=stochastic)
     
     def train_reg(self):
         self.reg.fit_(self.datas.X_train, self.Y_train)
@@ -130,7 +161,7 @@ class OneVersusAll:
     
     def get_pred(self, X=None):
         if X is None:
-            X = self.datas.X_train
+            X = self.datas.X_test
         y_pred = self.reg.predict_(X)
         return y_pred
     
@@ -162,10 +193,6 @@ def get_x(df, features, target):
     # print("ici: ", X.shape)
     return X
 
-# class OneVsAll:
-#     def __init__(self, data_path="data/dataset_train.csv", features=features, target=target, \
-#                      )
-
 def export_models(ones, export_path=export_path):
     with open(f"{export_path}/models", "wb") as f:
         pickle.dump(ones, f)
@@ -181,31 +208,39 @@ if __name__=="__main__":
 
     data_path = parse_args()
 
-    datas = DataParser(data_train_path=data_path, test_split=True, ratio=0.8)
-    print(datas.df_train.head())
+    datas = DataParser(data_train_path=data_path, \
+                        test_split=True, \
+                        ratio=0.8, \
+                        normalize=False,
+                        )
+    # print(datas.df_train.head())
     print(datas.df_train_cleaned.head())
-    print(datas.df_Y_train.head())
+    # print(datas.df_Y_train.head())
     print(datas.X_train[0:5])
-    print(datas.X_train.shape)
-    for key in datas.Ys_train.keys():
-        print(key, datas.Ys_train[key][0:5])
-        print(datas.Ys_train[key].shape)
+    print(datas.X_test[0:5])
+    # print(datas.X_train.shape)
+    # for key in datas.Ys_train.keys():
+        # print(key, datas.Ys_train[key][0:5])
+        # print(datas.Ys_train[key].shape)
     
     y_labels=y_labels
 
     preds = {}
     ones = {}
+    ones['houses'] = {}
+    ones['std'] = datas.std
     models = {}
     for i in range(0,len(y_labels)):
 
         print("--------------")
         print("")
         print(y_labels[i])
-        one = OneVersusAll(datas, y_labels[i])
+        one = OneVersusAll(datas, y_labels[i], \
+                            max_iter=10000, alpha=0.0001, stochastic=False)
         one.train_reg()
         metrics = one.evaluate()
         print(metrics)
-        ones[y_labels[i]] = one
+        ones['houses'][y_labels[i]] = one
         preds[y_labels[i]] = one.get_pred()
         models[y_labels[i]] = {
             'thetas': one.reg.thetas,
@@ -218,6 +253,7 @@ if __name__=="__main__":
     
     # Tres tres moche
     final_pred = datas.df_Y_test.copy()
+
     for i in range(0, len(final_pred)):
         best = -1
         for key in preds.keys():
@@ -231,8 +267,9 @@ if __name__=="__main__":
     print(final_pred.head())
 
     b = final_pred.to_numpy()
-    print(b)
-    b2 = datas.df_train_cleaned[target].to_numpy()
+    # print(b)
+    b2 = datas.df_Y_test.copy()
+    # print(b2)
 
     pos = 0
     for i in range(0,len(final_pred)):
@@ -240,5 +277,5 @@ if __name__=="__main__":
             pos += 1
     score = pos / len(final_pred)
     print(f"Score: {score}")
-
+    print(f"Accuracy scikit learn: {accuracy_score(b2 ,final_pred)}")
     export_models(models)

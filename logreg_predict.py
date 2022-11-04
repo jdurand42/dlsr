@@ -46,7 +46,11 @@ class DataParserTest:
         self.df_raw = get_df(data_path)
 
         self.df = self.df_raw[features]
-        self.df = self.df.dropna(axis=0).reset_index(drop=True)
+        # self.df = self.df.dropna(axis=0).reset_index(drop=True)
+
+        for col in self.df:
+            self.df[col] = self.df[col].fillna(value=self.df[col].mean())
+
         self.X = self.df.to_numpy()
 
 def load_models(export_path=export_path):
@@ -105,3 +109,4 @@ if __name__ == "__main__":
 
     final_df.to_csv(predictions_path)
 
+    print(datas.df.describe())
