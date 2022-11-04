@@ -50,19 +50,37 @@ class DataParserTest:
         self.X = self.df.to_numpy()
 
 def load_models(export_path=export_path):
-    with open(f"{export_path}", "rb") as f:
-        ones = pickle.load(f)
-    return ones
+    try:
+        with open(f"{export_path}", "rb") as f:
+            ones = pickle.load(f)
+        return ones
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+def parse_args():
+    try:
+        data_path = sys.argv[1]
+    except:
+        data_path = "data/dataset_test.csv"
+    try:
+        model_path = sys.argv[2]
+    except:
+        model_path = export_path
+    return data_path, model_path
 
 if __name__ == "__main__":
-    datas = DataParserTest()
+
+
+    data_path, model_path = parse_args()
+    datas = DataParserTest(data_path=data_path)
     print(datas.df_raw.head())
-    print(datas.df_raw.count())
+    print(datas.df_raw.shape)
     print(datas.df.head())
     print(datas.X[0:5])
     print(datas.X.shape)
 
-    models = load_models()
+    models = load_models(export_path=model_path)
     print(len(models))
     print(models)
 

@@ -27,22 +27,6 @@ y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 export_path = "./models/"
 
 def data_spliter(x, y, proportion):
-	"""Shuffles and splits the dataset (given by x and y) into a training and a test set,
-		while respecting the given proportion of examples to be kept in the training set.
-	Args:
-		x: has to be an numpy.array, a matrix of dimension m * n.
-		y: has to be an numpy.array, a vector of dimension m * 1.
-		proportion: has to be a float, the proportion of the dataset that will be assigned to the
-		training set.
-	Return:
-		(x_train, x_test, y_train, y_test) as a tuple of numpy.array
-		None if x or y is an empty numpy.array.
-		None if x and y do not share compatible dimensions.
-		None if x, y or proportion is not of expected type.
-	Raises:
-		This function should not raise any Exception.
-	"""
-
 	df = np.concatenate((x, y), axis=1)
 	np.random.shuffle(df)
 	x_i = [*range(0, df.shape[1] - 1)]
@@ -54,7 +38,7 @@ def data_spliter(x, y, proportion):
 
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
-                    test_split=False, ratio=None, y_labels=y_labels):
+                    test_split=False, ratio=0.8, y_labels=y_labels):
         self.features = features
         self.target = target
         self.y_labels = y_labels
@@ -186,9 +170,18 @@ def export_models(ones, export_path=export_path):
     with open(f"{export_path}/models", "wb") as f:
         pickle.dump(ones, f)
 
+def parse_args():
+    try:
+        data_path = sys.argv[1]
+    except:
+        data_path = "data/dataset_train.csv"
+    return data_path
 
 if __name__=="__main__":
-    datas = DataParser(test_split=True, ratio=0.8)
+
+    data_path = parse_args()
+
+    datas = DataParser(data_train_path=data_path, test_split=True, ratio=0.8)
     print(datas.df_train.head())
     print(datas.df_train_cleaned.head())
     print(datas.df_Y_train.head())
@@ -249,35 +242,3 @@ if __name__=="__main__":
     print(f"Score: {score}")
 
     export_models(models)
-
-
-
-    # one = "Ravenclaw"
-
-    # df = get_df("data/dataset_train.csv")
-    # df = df.dropna(axis=0).reset_index(drop=True)
-    # df_test = get_df("data/dataset_test.csv")
-    # # df_test = df_test.dropna(axis=0).reset_index(drop=True)
-    # # print(df.head(5))
-    # # print(df.columns)
-    
-    # X_train = get_x(df, features, target)
-    # # print(np.unique(X_train))
-    # Y_train = df[target]
-    # print(np.unique(Y_train))
-    # X_test = get_x(df_test, features, target)
-    # Y_test = df_test[target]
-
-    # print(np.unique(X_test))
-
-    # print(X_test.shape)
-    # Y_train = label_one_vs_all(Y_train, 'Hogwarts House', one)
-    # Y_train = Y_train.to_numpy()
-    # Y_train = Y_train.reshape((Y_train.shape[0], 1))
-
-    # Y_test = label_one_vs_all(Y_test, 'Hogwarts House', one)
-    # Y_test = Y_test.to_numpy()
-    # Y_test = Y_test.reshape((Y_test.shape[0], 1))
-    # # print(Y_train)
-    # print("icicicicic:", X_test.shape)
-    # reg = perform_one_reg(X_train, Y_train, X_test, Y_test)
