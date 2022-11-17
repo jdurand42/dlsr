@@ -31,15 +31,20 @@ def sigmoid_(x):
 	return sig
 
 class LogisticRegression():
-	def __init__(self, thetas, alpha=0.001, max_iter=1000, stochastic=False):
+	def __init__(self, thetas, alpha=0.001, max_iter=1000, stochastic=False, lambda_=1, ridge_reg=True):
 		self.alpha = alpha
 		self.thetas = thetas
 		self.max_iter = max_iter
 		self.stochastic = stochastic
+		self.lambda_ = lambda_
+		self.ridge_reg = ridge_reg
 
 	def fit_(self, x, y):
 
 		# lambda_ = 0.5
+		self.stochastic = False
+		self.ridge_reg = False
+
 		x_prime = add_intercept(x)
 		if self.stochastic == False:
 			for i in range(0, self.max_iter):
@@ -48,7 +53,12 @@ class LogisticRegression():
 				# thetas[0][0] = 0
 				# print(np.dot(np.transpose(x_prime), y_pred - y))
 				j =  ((np.dot(np.transpose(x_prime), y_pred - y))) / len(y)
-				self.thetas = self.thetas - self.alpha * j
+				if self.ridge_reg == True:
+					ridge = self.lambda_ + j[1:] + np.square(self.thetas[1:]).sum()
+					self.thetas[1:] = self.thetas[1:] - self.alpha * ridge
+					self.thetas[0][0] = self.thetas[0][0] - self.alpha * j[0]
+				else:
+					self.thetas = self.thetas - self.alpha * j
 				# if i == 0 or i == 1:
 				# 	print(j)
 				# # 
@@ -59,6 +69,7 @@ class LogisticRegression():
 					y_pred = self.predict_(x[k:k+1])
 					j = (np.dot(np.transpose(x_prime[k:k+1]), y_pred - y[k:k+1])) / 1
 					self.thetas = self.thetas - self.alpha * j
+		# print(self.thetas)
 		return self.thetas
 
 	def predict_(self, x):
@@ -117,7 +128,6 @@ class LogisticRegression():
 		for i in range(0, len(eq)):
 			if y[i][0] == y_hat[i][0]:
 				count +=1
-		print(count)
 		return count / len(y)
 	
 	def r2_(self, y, y_hat):

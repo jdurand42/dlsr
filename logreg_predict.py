@@ -20,7 +20,7 @@ def get_df(path):
 
 features = ['Herbology',
        'Defense Against the Dark Arts', 'Divination', 'Muggle Studies',
-       'Ancient Runes', 'History of Magic', 'Transfiguration', 'Potions',
+       'Ancient Runes', 'History of Magic', 'Transfiguration',
        'Charms', 'Flying']
 
 target = 'Hogwarts House'
@@ -38,20 +38,30 @@ class Predictor:
 
 class DataParserTest:
     def __init__(self, features=features, target=target, \
-                    data_path="data/dataset_test.csv", y_labels=y_labels):
+                    data_path="data/dataset_test.csv", y_labels=y_labels,\
+                    normalization=None):
         self.features = features
         self.target = target
         self.y_labels = y_labels
 
-        self.df_raw = get_df(data_path)
+        self.df = get_df(data_path)
 
-        self.df = self.df_raw[features]
-        # self.df = self.df.dropna(axis=0).reset_index(drop=True)
+        self.df = self.df[features]
 
         for col in self.df:
             self.df[col] = self.df[col].fillna(value=self.df[col].mean())
 
+        if normalization is not None:
+            for feature in self.df[features]:
+                self.df[feature] = self.zscore_(self.df[feature].to_numpy(),normalization['stds'][feature], \
+                    normalization['means'][feature])
+        # self.df = self.df.dropna(axis=0).reset_index(drop=True)
         self.X = self.df.to_numpy()
+    
+    def zscore_(self, x, std, mean):
+	    x_prime = (x - mean) / std
+	    return x_prime
+
 
 def load_models(export_path=export_path):
     try:
@@ -75,24 +85,26 @@ def parse_args():
 
 if __name__ == "__main__":
 
-
     data_path, model_path = parse_args()
-    datas = DataParserTest(data_path=data_path)
-    print(datas.df_raw.head())
-    print(datas.df_raw.shape)
-    print(datas.df.head())
-    print(datas.X[0:5])
-    print(datas.X.shape)
 
     models = load_models(export_path=model_path)
     print(len(models))
     print(models)
 
+    datas = DataParserTest(data_path=data_path, features=models['features'], \
+        target=models['target'], normalization=models['normalization'])
+    print(datas.df.head())
+    print(datas.df.shape)
+    print(datas.df.head())
+    print(datas.X[0:5])
+    print(datas.X.shape)
+
     ones = {}
     preds = {}
-    for key in models.keys():
-        ones[key] = Predictor(thetas=models[key]['thetas'], y_label=key, reg_params=models[key]['reg_params'], \
-                score=models[key]['score'])
+    for key in models['houses'].keys():
+        ones[key] = Predictor(thetas=models['houses'][key]['thetas'], \
+            y_label=key, reg_params=models['houses'][key]['reg_params'], \
+                score=models['houses'][key]['score'])
         preds[key] = ones[key].predict(datas.X)
 
     final_pred = []
@@ -107,6 +119,6 @@ if __name__ == "__main__":
     final_df = pd.DataFrame({target: final_pred})
     print(final_df.head())
 
-    final_df.to_csv(predictions_path)
-
+    # final_df.to_csv(predictions_path)
     print(datas.df.describe())
+ 

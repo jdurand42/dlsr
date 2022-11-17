@@ -5,6 +5,8 @@ import pickle
 from logistic_regression import LogisticRegression
 from sklearn.metrics import accuracy_score
 from TinyStatistician import TinyStatistician as Ts
+
+from scipy.stats import zscore
 # from sklearn.metrics import r2_score
 
 def get_df(path):
@@ -38,67 +40,74 @@ def data_spliter(x, y, proportion):
 	p = int(len(x) * proportion)
 	return (x[:p], x[p:], y[:p], y[p:])
 
-def zscore(x, std):
-	# ts = Ts()
-	# mean = ts.mean(x)
-	x_prime = (x - x.mean()) / std
-	return x_prime
-
-
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
                     test_split=False, ratio=None, y_labels=y_labels, normalize=False):
         self.features = features
         self.target = target
         self.y_labels = y_labels
-        # self.ts = Ts()
+        self.test_split = test_split
+        self.ratio = ratio
+        self.normalized = normalize
+        self.stds = {}
+        self.means = {}
+        self.ts = Ts()
 
-        self.df_train= self.parse_dfs(data_train_path)
+        self.df = get_df(data_train_path)
 
-        self.df_train_cleaned = self.df_train[[target]+features]
+        self.df = self.df[[target]+features]
         
-        for col in self.df_train_cleaned[features]:
-            self.df_train_cleaned[col] = self.df_train_cleaned[col].fillna(value=self.df_train_cleaned[col].mean())
-        
-        print(self.df_train_cleaned.isna().count())
+        for col in self.df[features]:
+            self.df[col] = self.df[col].fillna(value=self.df[col].mean())
 
-        self.std = self.df_train_cleaned[self.features].to_numpy().std()
+        # print("Nan count: ", self.df.isnan().count())
+
+        # print("scipy norm")
+        # df_norm = zscore(self.df[features])
+        # print(df_norm.head())
+
+        if normalize == True:
+            self.normalize()
 
         if test_split == False:
-            self.df_test = self.df_train
-            self.df_test_cleaned = self.df_train_cleaned
+            self.df_train = self.df
+            self.df_test = self.df
         else:
             self.split_df(ratio=ratio)
         
-        self.X_train = self.df_train_cleaned[features].to_numpy()
-        self.X_test = self.df_test_cleaned[features].to_numpy()
+        self.X_train = self.df_train[features].to_numpy()
+        self.X_test = self.df_test[features].to_numpy()
 
-        self.df_Y_train = self.df_train_cleaned[self.target]
-        self.df_Y_test = self.df_test_cleaned[self.target]
-
-        # self.Y_train = self.df_train_cleaned[target]
-        # self.Y_test = self.df_train_cleaned[target]
+        self.df_Y_train = self.df_train[self.target]
+        self.df_Y_test = self.df_test[self.target]
 
         self.Ys_train = self.get_Ys(self.df_Y_train)
         self.Ys_test = self.get_Ys(self.df_Y_test)
 
-        if normalize == True:
-            self.normalize()
     
     def normalize(self):
-        self.X_train = zscore(self.X_train, self.std)
-        self.X_test = zscore(self.X_test, self.std)
+        for feature in self.features:
+            # Warning: Mean
+            # print(self.df[feature].to_numpy())
+            # print(self.df[feature].to_numpy().mean())
+            self.means[feature] = self.ts.mean(self.df[feature].to_numpy())
+            self.stds[feature] = self.ts.std(self.df[feature].to_numpy())
+            self.df[feature] = self.zscore_(self.df[feature], self.stds[feature], self.means[feature])
         # print(self.X_train.head())
         # print(self.X_test.head())
+
+    def zscore_(self, x, std, mean):
+	    x_prime = (x - mean) / std
+	    return x_prime
 
 
     def split_df(self, ratio):
         if ratio == None:
             ratio = 0.8
-        split = self.df_train_cleaned.sample(frac=ratio)
-        rest = self.df_train_cleaned.drop(split.index)
-        self.df_train_cleaned = split.reset_index()
-        self.df_test_cleaned = rest.reset_index()
+        split = self.df.sample(frac=ratio)
+        rest = self.df.drop(split.index)
+        self.df_train= split.reset_index()
+        self.df_test = rest.reset_index()
         # print("ici")
         # print(self.df_train_cleaned.head())
         # print(self.df_train_cleaned.count())
@@ -110,14 +119,6 @@ class DataParser:
         for i in range(0, len(self.y_labels)):
             b[y_labels[i]] = self.get_Y(Y_ori, y_labels[i])
         return b
-
-    def parse_dfs(self, path):
-        df_raw = get_df(path)
-        print("icici")
-        # print(len(df_raw))
-        # print(df_raw[target].isna().count())
-        # df_cleaned = df_raw.dropna(axis=0).reset_index(drop=True)
-        return df_raw
 
     def label_one_vs_all(self, y, value):
         y = y.copy()
@@ -190,7 +191,6 @@ class OneVersusAll:
 
 def get_x(df, features, target):
     X = df[features].to_numpy()
-    # print("ici: ", X.shape)
     return X
 
 def export_models(ones, export_path=export_path):
@@ -204,6 +204,26 @@ def parse_args():
         data_path = "data/dataset_train.csv"
     return data_path
 
+def print_data_infos(datas):
+    # print(datas.df_train.head())
+    print(datas.df.head(2))
+    # print(datas.df_Y_train.head())
+    print(datas.X_train[0:2])
+    print(datas.X_test[0:2])
+    # print(datas.X_train.shape)
+    # for key in datas.Ys_train.keys():
+        # print(key, datas.Ys_train[key][0:5])
+        # print(datas.Ys_train[key].shape)
+    
+def print_test_split_infos(datas, y_labels=y_labels, target=target):
+    print("Split ratio: ", datas.ratio)
+    print("train: Size: ", len(datas.df_train))
+    for i in range(0, len(y_labels)):
+        print(f"{y_labels[i]}: {len(datas.df_train[datas.df_train[target] == y_labels[i]])}")
+    print("test: Size: ", len(datas.df_test))
+    for i in range(0, len(y_labels)):
+        print(f"{y_labels[i]}: {len(datas.df_test[datas.df_test[target] == y_labels[i]])}")
+
 if __name__=="__main__":
 
     data_path = parse_args()
@@ -211,38 +231,35 @@ if __name__=="__main__":
     datas = DataParser(data_train_path=data_path, \
                         test_split=True, \
                         ratio=0.8, \
-                        normalize=False,
+                        normalize=True,
                         )
-    # print(datas.df_train.head())
-    print(datas.df_train_cleaned.head())
-    # print(datas.df_Y_train.head())
-    print(datas.X_train[0:5])
-    print(datas.X_test[0:5])
-    # print(datas.X_train.shape)
-    # for key in datas.Ys_train.keys():
-        # print(key, datas.Ys_train[key][0:5])
-        # print(datas.Ys_train[key].shape)
-    
+    print_data_infos(datas)
+
     y_labels=y_labels
 
+    print_test_split_infos(datas, y_labels, target)
+    # sys.exit()
     preds = {}
     ones = {}
     ones['houses'] = {}
-    ones['std'] = datas.std
     models = {}
+    models['houses'] = {}
+    if datas.normalized == True:
+        models['normalization'] = {'means': datas.means, 'stds': datas.stds}
+    models['features'] = features
+    models['target'] = target
     for i in range(0,len(y_labels)):
-
         print("--------------")
         print("")
         print(y_labels[i])
         one = OneVersusAll(datas, y_labels[i], \
-                            max_iter=10000, alpha=0.0001, stochastic=False)
+                            max_iter=3000, alpha=0.1, stochastic=False)
         one.train_reg()
         metrics = one.evaluate()
         print(metrics)
         ones['houses'][y_labels[i]] = one
         preds[y_labels[i]] = one.get_pred()
-        models[y_labels[i]] = {
+        models['houses'][y_labels[i]] = {
             'thetas': one.reg.thetas,
             'score': metrics['score'],
             'reg_params': one.reg_params,
