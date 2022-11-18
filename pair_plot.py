@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def pair_plot(src = './datasets/dataset_train.csv'):
+def pair_plot(src = 'data/dataset_train.csv'):
     df = pd.read_csv(src, index_col= 'Index')
     sns.pairplot(df, hue= "Hogwarts House",vars = df.columns[5:],
                 kind = 'scatter', corner=True)
