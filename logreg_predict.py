@@ -45,9 +45,9 @@ class DataParserTest:
 
         self.df = get_df(data_path)
 
-        self.df = self.df[features]
+        self.df = self.df
 
-        for col in self.df:
+        for col in self.df[features]:
             self.df[col] = self.df[col].fillna(value=self.df[col].mean())
 
         if normalization is not None:
@@ -55,7 +55,7 @@ class DataParserTest:
                 self.df[feature] = self.zscore_(self.df[feature].to_numpy(),normalization['stds'][feature], \
                     normalization['means'][feature])
         # self.df = self.df.dropna(axis=0).reset_index(drop=True)
-        self.X = self.df.to_numpy()
+        self.X = self.df[features].to_numpy()
 
     def zscore_(self, x, std, mean):
 	    x_prime = (x - mean) / std

@@ -45,6 +45,7 @@ class LogisticRegression():
 			j =  ((np.dot(np.transpose(x_prime), y_pred - y))) / len(y)
 			self.thetas = self.thetas - self.alpha * j
 			self.js.append(self.loss_(y, y_pred))
+			#self.score_(y,y_pred)
 		print(self.js[-10:])
 		return self.js
 
