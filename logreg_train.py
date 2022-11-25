@@ -244,6 +244,7 @@ if __name__=="__main__":
         models['houses'][y_labels[i]] = {
             'thetas': one.reg.thetas,
             'score': metrics['score'],
+            'loss': metrics['loss'],
             'reg_params': one.reg_params,
             'y_label': one.y_label,
         }
