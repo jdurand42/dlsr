@@ -35,19 +35,32 @@ class LogisticRegression():
 		self.alpha = alpha
 		self.thetas = thetas
 		self.max_iter = max_iter
-		self.js = []
+		self.losses = []
+		self.r2s = []
+		# self.scores = []
 
-	def fit_(self, x, y):
+
+
+	def fit_(self, x, y, early_stopping = None, prescision = 5):
 		x_prime = add_intercept(x)
-
+		min_loss = np.inf
+		count = 0
 		for i in range(0, self.max_iter):
 			y_pred = self.predict_(x)
+			loss = self.loss_(y, y_pred)
+			self.losses.append(loss)
+			self.r2s.append(self.r2_(y,y_pred))
+			if early_stopping is not None:
+				if np.round(loss,prescision) < np.round(min_loss,prescision):
+					min_loss = loss
+					count = 0
+				else :
+					count += 1
+					if count > early_stopping:
+						print('early stopping at iteration : ', i)
+						break
 			j =  ((np.dot(np.transpose(x_prime), y_pred - y))) / len(y)
 			self.thetas = self.thetas - self.alpha * j
-			self.js.append(self.loss_(y, y_pred))
-			#self.score_(y,y_pred)
-		print(self.js[-10:])
-		return self.js
 
 	def predict_(self, x):
 		x_prime = add_intercept(x)

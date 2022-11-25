@@ -4,9 +4,18 @@ import sys
 import pickle
 from logistic_regression import LogisticRegression
 from TinyStatistician import TinyStatistician as Ts
+import matplotlib.pyplot as plt
+import argparse
 
+parser = argparse.ArgumentParser()
 
-
+parser.add_argument('-f','--file', type=str, default='data/dataset_train.csv',
+                    help='path to csv file containing data')
+parser.add_argument('-e','--early_stopping', type=int, default = None,
+                    help='number of epochs needed for early stopping')
+parser.add_argument('-p','--prescision', type=int, default = 5,
+                    help='prescision for early stopping')
+ 
 def get_df(path):
     try:
         df = pd.read_csv(path)
@@ -84,9 +93,8 @@ class DataParser:
             self.df_train[feature] = self.zscore_(self.df_train[feature], self.stds[feature], self.means[feature])
 
     def zscore_(self, x, std, mean):
-	    x_prime = (x - mean) / std
-	    return x_prime
-
+        x_prime = (x - mean) / std
+        return x_prime
 
     def split_df(self, ratio):
         if ratio == None:
@@ -137,8 +145,8 @@ class OneVersusAll:
             thetas = np.zeros((self.datas.X_train.shape[1] + 1, 1))
         self.reg = LogisticRegression(thetas, alpha=alpha, max_iter=max_iter, stochastic=stochastic)
 
-    def train_reg(self):
-        self.reg.fit_(self.datas.X_train, self.Y_train)
+    def train_reg(self, early_stopping = None, prescision = 5):
+        self.reg.fit_(self.datas.X_train, self.Y_train, early_stopping = early_stopping, prescision =prescision)
         # print(self.reg.thetas)
         return self.reg
 
@@ -162,13 +170,13 @@ class OneVersusAll:
         return metrics
 
     def binarise_y(self, y, treshold):
-	    y = y.copy()
-	    for i in range(0, len(y)):
-		    if y[i][0] >= treshold:
-			    y[i][0] = 1
-		    else:
-			    y[i][0] = 0
-	    return y
+        y = y.copy()
+        for i in range(0, len(y)):
+            if y[i][0] >= treshold:
+                y[i][0] = 1
+            else:
+                y[i][0] = 0
+        return y
 
 
 def get_x(df, features, target):
@@ -179,12 +187,13 @@ def export_models(ones, export_path=export_path):
     with open(f"{export_path}/models", "wb") as f:
         pickle.dump(ones, f)
 
-def parse_args():
-    try:
-        data_path = sys.argv[1]
-    except:
-        data_path = "data/dataset_train.csv"
-    return data_path
+# def parse_args():
+#     try:
+#         data_path = sys.argv[1]
+#     except:
+#         data_path = "data/dataset_train.csv"
+
+#     return data_path
 
 def print_data_infos(datas):
     # print(datas.df_train.head())
@@ -208,9 +217,9 @@ def print_test_split_infos(datas, y_labels=y_labels, target=target):
 
 if __name__=="__main__":
 
-    data_path = parse_args()
-
-    datas = DataParser(data_train_path=data_path, \
+    # data_path, early_stopping = parse_args()
+    args = parser.parse_args()
+    datas = DataParser(data_train_path=args.file, \
                         test_split=True, \
                         ratio=0.8, \
                         normalize=True,
@@ -230,13 +239,15 @@ if __name__=="__main__":
         models['normalization'] = {'means': datas.means, 'stds': datas.stds}
     models['features'] = features
     models['target'] = target
+    fig, axs = plt.subplots(2)
+   
     for i in range(0,len(y_labels)):
         print("--------------")
         print("")
         print(y_labels[i])
         one = OneVersusAll(datas, y_labels[i], \
                             max_iter=3000, alpha=0.1, stochastic=False)
-        one.train_reg()
+        one.train_reg(args.early_stopping, args.prescision)
         metrics = one.evaluate()
         print(metrics)
         ones['houses'][y_labels[i]] = one
@@ -248,8 +259,18 @@ if __name__=="__main__":
             'reg_params': one.reg_params,
             'y_label': one.y_label,
         }
+        axs[0].plot(one.reg.losses)
+        axs[1].plot(one.reg.r2s)
         print("-----------")
     # print(preds)
+    
+    # plot graphs
+    axs[0].set_ylabel('loss')
+    axs[1].set_ylabel('r2')
+    axs[1].set_xlabel('epochs')
+    axs[0].legend(y_labels)
+
+    plt.show()
 
     # Tres tres moche
     final_pred = datas.df_Y_test.copy()
