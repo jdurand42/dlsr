@@ -56,7 +56,7 @@ class LogisticRegression():
 				if self.ridge_reg == True:
 					ridge = self.lambda_ + j[1:] + np.square(self.thetas[1:]).sum()
 					self.thetas[1:] = self.thetas[1:] - self.alpha * ridge
-					self.thetas[0][0] = self.thetas[0][0] - self.alpha * j[0]
+					# self.thetas[0][0] = self.thetas[0][0] - self.alpha * j[0]
 				else:
 					self.thetas = self.thetas - self.alpha * j
 				# if i == 0 or i == 1:

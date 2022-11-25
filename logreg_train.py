@@ -3,11 +3,9 @@ import pandas as pd
 import sys
 import pickle
 from logistic_regression import LogisticRegression
-from sklearn.metrics import accuracy_score
 from TinyStatistician import TinyStatistician as Ts
 
-from scipy.stats import zscore
-# from sklearn.metrics import r2_score
+
 
 def get_df(path):
     try:
@@ -29,16 +27,7 @@ target = 'Hogwarts House'
 y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 
 export_path = "./models/"
-
-def data_spliter(x, y, proportion):
-	df = np.concatenate((x, y), axis=1)
-	np.random.shuffle(df)
-	x_i = [*range(0, df.shape[1] - 1)]
-	x = df[:, x_i]
-	y = df[:, [x.shape[1]]]
-
-	p = int(len(x) * proportion)
-	return (x[:p], x[p:], y[:p], y[p:])
+eval_data_path = "data/eval/test.csv"
 
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
@@ -56,25 +45,24 @@ class DataParser:
         self.df = get_df(data_train_path)
 
         self.df = self.df[[target]+features]
-        
+
         for col in self.df[features]:
             self.df[col] = self.df[col].fillna(value=self.df[col].mean())
 
-        # print("Nan count: ", self.df.isnan().count())
-
-        # print("scipy norm")
-        # df_norm = zscore(self.df[features])
-        # print(df_norm.head())
-
-        if normalize == True:
-            self.normalize()
+        # if normalize == True:
+        self.get_stds_means()
 
         if test_split == False:
             self.df_train = self.df
             self.df_test = self.df
         else:
             self.split_df(ratio=ratio)
-        
+
+        self.df_test[self.features+[self.target]].to_csv(eval_data_path)
+
+        if normalize == True:
+            self.normalize()
+
         self.X_train = self.df_train[features].to_numpy()
         self.X_test = self.df_test[features].to_numpy()
 
@@ -84,17 +72,16 @@ class DataParser:
         self.Ys_train = self.get_Ys(self.df_Y_train)
         self.Ys_test = self.get_Ys(self.df_Y_test)
 
-    
-    def normalize(self):
+
+    def get_stds_means(self):
         for feature in self.features:
-            # Warning: Mean
-            # print(self.df[feature].to_numpy())
-            # print(self.df[feature].to_numpy().mean())
             self.means[feature] = self.ts.mean(self.df[feature].to_numpy())
             self.stds[feature] = self.ts.std(self.df[feature].to_numpy())
-            self.df[feature] = self.zscore_(self.df[feature], self.stds[feature], self.means[feature])
-        # print(self.X_train.head())
-        # print(self.X_test.head())
+
+    def normalize(self):
+        for feature in self.features:
+            self.df_test[feature] = self.zscore_(self.df_test[feature], self.stds[feature], self.means[feature])
+            self.df_train[feature] = self.zscore_(self.df_train[feature], self.stds[feature], self.means[feature])
 
     def zscore_(self, x, std, mean):
 	    x_prime = (x - mean) / std
@@ -108,11 +95,6 @@ class DataParser:
         rest = self.df.drop(split.index)
         self.df_train= split.reset_index()
         self.df_test = rest.reset_index()
-        # print("ici")
-        # print(self.df_train_cleaned.head())
-        # print(self.df_train_cleaned.count())
-        # print(self.df_test_cleaned.head())
-        # print(self.df_test_cleaned.count())
 
     def get_Ys(self, Y_ori):
         b = {}
@@ -154,31 +136,31 @@ class OneVersusAll:
         if thetas is None:
             thetas = np.zeros((self.datas.X_train.shape[1] + 1, 1))
         self.reg = LogisticRegression(thetas, alpha=alpha, max_iter=max_iter, stochastic=stochastic)
-    
+
     def train_reg(self):
         self.reg.fit_(self.datas.X_train, self.Y_train)
         # print(self.reg.thetas)
         return self.reg
-    
+
     def get_pred(self, X=None):
         if X is None:
             X = self.datas.X_test
         y_pred = self.reg.predict_(X)
         return y_pred
-    
+
     def evaluate(self, X=None,Y=None):
         if X is None:
             X = self.datas.X_test
         if Y is None:
             Y = self.Y_test
         y_pred = self.get_pred(X)
-        
+
         metrics = {'loss': self.reg.loss_(Y, y_pred),
                     'score': self.reg.score_(Y, self.binarise_y(y_pred,0.5)),
                     'r2': self.reg.r2_(Y,y_pred)
                     }
         return metrics
-    
+
     def binarise_y(self, y, treshold):
 	    y = y.copy()
 	    for i in range(0, len(y)):
@@ -214,7 +196,7 @@ def print_data_infos(datas):
     # for key in datas.Ys_train.keys():
         # print(key, datas.Ys_train[key][0:5])
         # print(datas.Ys_train[key].shape)
-    
+
 def print_test_split_infos(datas, y_labels=y_labels, target=target):
     print("Split ratio: ", datas.ratio)
     print("train: Size: ", len(datas.df_train))
@@ -267,7 +249,7 @@ if __name__=="__main__":
         }
         print("-----------")
     # print(preds)
-    
+
     # Tres tres moche
     final_pred = datas.df_Y_test.copy()
 
@@ -294,5 +276,5 @@ if __name__=="__main__":
             pos += 1
     score = pos / len(final_pred)
     print(f"Score: {score}")
-    print(f"Accuracy scikit learn: {accuracy_score(b2 ,final_pred)}")
+    # print(f"Accuracy scikit learn: {accuracy_score(b2 ,final_pred)}")
     export_models(models)

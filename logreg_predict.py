@@ -28,11 +28,10 @@ target = 'Hogwarts House'
 y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 
 class Predictor:
-    def __init__(self, thetas, y_label=None, reg_params={}, score=None):
+    def __init__(self, thetas, reg_params={}):
         self.thetas = thetas
         self.reg = LogisticRegression(thetas, **reg_params)
-        self.score = score
-    
+
     def predict(self, X):
         return self.reg.predict_(X)
 
@@ -57,7 +56,7 @@ class DataParserTest:
                     normalization['means'][feature])
         # self.df = self.df.dropna(axis=0).reset_index(drop=True)
         self.X = self.df.to_numpy()
-    
+
     def zscore_(self, x, std, mean):
 	    x_prime = (x - mean) / std
 	    return x_prime
@@ -88,14 +87,14 @@ if __name__ == "__main__":
     data_path, model_path = parse_args()
 
     models = load_models(export_path=model_path)
-    print(len(models))
+    # print(len(models))
     print(models)
 
     datas = DataParserTest(data_path=data_path, features=models['features'], \
         target=models['target'], normalization=models['normalization'])
-    print(datas.df.head())
+    print(datas.df.head(1))
     print(datas.df.shape)
-    print(datas.df.head())
+    print(datas.df.head(1))
     print(datas.X[0:5])
     print(datas.X.shape)
 
@@ -103,14 +102,14 @@ if __name__ == "__main__":
     preds = {}
     for key in models['houses'].keys():
         ones[key] = Predictor(thetas=models['houses'][key]['thetas'], \
-            y_label=key, reg_params=models['houses'][key]['reg_params'], \
-                score=models['houses'][key]['score'])
+        reg_params=models['houses'][key]['reg_params'])
         preds[key] = ones[key].predict(datas.X)
 
     final_pred = []
     for i in range(0, len(datas.X)):
         best = -1
         for key in preds.keys():
+            # print(key, preds[key][i])
             if preds[key][i] > best:
                 best = preds[key][i]
                 best_key = key
@@ -119,6 +118,4 @@ if __name__ == "__main__":
     final_df = pd.DataFrame({target: final_pred})
     print(final_df.head())
 
-    # final_df.to_csv(predictions_path)
-    print(datas.df.describe())
- 
+    final_df.to_csv(predictions_path)
