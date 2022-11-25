@@ -55,7 +55,7 @@ def describe(src = 'data/dataset_train.csv'):
     columns = df.dtypes[(df.dtypes == 'float') | (df.dtypes == 'int')].index
     for column in columns:
         ds.insert(0, column, describe_one(*df_to_list(df, column)))
-    ds.insert(0,'', ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'sum', 'Nones', 'range', 'var','coef var' ])
+    ds.insert(0,'', ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'sum', 'Nans', 'range', 'var','coef var' ])
     ds = ds.set_index('')
     print(ds)
 
