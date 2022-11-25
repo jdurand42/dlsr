@@ -1,7 +1,7 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import sys
 
 def scatter_plot(src = './datasets/dataset_train.csv'):
     df = pd.read_csv(src, index_col= 'Index')
@@ -10,4 +10,7 @@ def scatter_plot(src = './datasets/dataset_train.csv'):
 
 
 if __name__ == '__main__':
-    scatter_plot()
+    if len(sys.argv) != 2:
+        print('takes only one arguemnt')
+        exit()
+    scatter_plot(str(sys.argv[1]))

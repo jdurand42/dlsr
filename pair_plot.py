@@ -1,6 +1,7 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import sys
 
 
 def pair_plot(src = 'data/dataset_train.csv'):
@@ -10,4 +11,7 @@ def pair_plot(src = 'data/dataset_train.csv'):
     plt.show()
 
 if __name__ == '__main__':
-    pair_plot()
+    if len(sys.argv) != 2:
+        print('takes only one arguemnt')
+        exit()
+    pair_plot(str(sys.argv[1]))

@@ -1,6 +1,6 @@
 from math import sqrt
 import pandas as pd
-
+import sys
 
 def var(x, mean, m):
     sum = 0
@@ -59,4 +59,8 @@ def describe(src = 'data/dataset_train.csv'):
     print(ds)
 
 if __name__ == '__main__':
-    describe()
+    if len(sys.argv) != 2:
+        print('takes only one arguemnt')
+        exit()
+    describe(str(sys.argv[1]))
+

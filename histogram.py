@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
 
 def histogram(src = './datasets/dataset_train.csv'):
     df = pd.read_csv(src, index_col= 'Index')
@@ -16,4 +17,7 @@ def histogram(src = './datasets/dataset_train.csv'):
     plt.show()
 
 if __name__ == '__main__':
-    histogram()
+    if len(sys.argv) != 2:
+        print('takes only one arguemnt')
+        exit()
+    histogram(str(sys.argv[1]))
