@@ -38,14 +38,15 @@ def all_sum(x):
 def df_to_list(df, column):
     ls = df[column].values.tolist()
     cleaned_ls = [x for x in ls if str(x) != 'nan']
-    return cleaned_ls
+    return cleaned_ls, len(ls)
 
 
-def describe_one(x):
+def describe_one(x, l):
     sum, mean, count = all_sum(x)
     p25 , p50, p75, min, max = all_sort(x, count)
     std = f_std(x, mean, count)
-    return [count, mean, std, min, p25, p50, p75, max, sum]
+    return [count, mean, std, min, p25, p50, p75, max, sum, int(l - count), max - min, std * std, 100 * std / mean]
+
 
 def describe(src = 'data/dataset_train.csv'):
     pd.set_option("display.max_rows", None, "display.max_columns", None,'display.max_colwidth', -1)
@@ -53,8 +54,8 @@ def describe(src = 'data/dataset_train.csv'):
     df = pd.read_csv(src, index_col= 'Index')
     columns = df.dtypes[(df.dtypes == 'float') | (df.dtypes == 'int')].index
     for column in columns:
-        ds.insert(0, column, describe_one(df_to_list(df, column)))
-    ds.insert(0,'', ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'sum'])
+        ds.insert(0, column, describe_one(*df_to_list(df, column)))
+    ds.insert(0,'', ['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max', 'sum', 'Nones', 'range', 'var','coef var' ])
     ds = ds.set_index('')
     print(ds)
 
