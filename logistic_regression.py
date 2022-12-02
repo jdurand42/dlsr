@@ -37,7 +37,6 @@ class LogisticRegression():
 		self.max_iter = max_iter
 		self.losses = []
 		self.r2s = []
-		# self.scores = []
 
 
 
