@@ -199,8 +199,8 @@ def print_data_infos(datas):
     # print(datas.df_train.head())
     print(datas.df.head(2))
     # print(datas.df_Y_train.head())
-    print(datas.X_train[0:2])
-    print(datas.X_test[0:2])
+    # print(datas.X_train[0:2])
+    # print(datas.X_test[0:2])
     # print(datas.X_train.shape)
     # for key in datas.Ys_train.keys():
         # print(key, datas.Ys_train[key][0:5])
@@ -285,7 +285,7 @@ if __name__=="__main__":
         # print(i, best_key)
         final_pred[i] = best_key
     # best_key
-    print(final_pred.head())
+    print(final_pred.head(2))
 
     b = final_pred.to_numpy()
     # print(b)

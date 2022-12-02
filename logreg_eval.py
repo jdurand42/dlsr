@@ -63,9 +63,9 @@ def print_feature_importance(models, features):
     t = np.absolute(models['houses'][houses[0]]['thetas'])
     for i in range(1, len(houses)):
         t = np.append(t, np.absolute(models['houses'][houses[i]]['thetas']), axis=1)
-    print(t)
+    # print(t)
     t = t[1:].transpose()
-    print(t)
+    # print(t)
     fig, ax = plt.subplots()
     X = np.arange(0, len(features))
     width = 0.2
@@ -74,7 +74,7 @@ def print_feature_importance(models, features):
     b3 = ax.bar(X + width * 0.5 , t[2] / t[2].sum(), color="red", width=width)
     b4 = ax.bar(X + width * 1.5, t[3] / t[3].sum(), color="grey", width=width)
     ax.set_title('Importance by feature and house')
-    ax.set_ylabel("Importance thumb coefficient")
+    ax.set_ylabel("Importance")
     ax.set_xticks(X, features)
     ax.legend(labels=houses)
     plt.tight_layout()
@@ -128,16 +128,15 @@ if __name__ == "__main__":
     data_path, model_path = parse_args()
 
     models = load_models(export_path=model_path)
-    # print(len(models))
-    print(models)
+    # print(models)
 
     datas = DataParserTest(data_path=data_path, features=models['features'], \
         target=models['target'], normalization=models['normalization'])
-    print(datas.df.head())
-    print(datas.df.shape)
-    print(datas.df.head())
-    print(datas.X[0:5])
-    print(datas.X.shape)
+    # print(datas.df.head())
+    # print(datas.df.shape)
+    # print(datas.df.head())
+    # print(datas.X[0:5])
+    # print(datas.X.shape)
 
     ones = {}
     preds = {}
@@ -156,10 +155,10 @@ if __name__ == "__main__":
         final_pred.append(best_key)
 
     final_df = pd.DataFrame({target: final_pred})
-    print(final_df.head(20))
+    print(final_df.head(5))
 
     print_feature_importance(models, features)
-    print(datas.df[target].shape, final_df.to_numpy().shape)
+    # print(datas.df[target].shape, final_df.to_numpy().shape)
     Y = datas.df[target].to_numpy().reshape(datas.df[target].shape[0], 1)
     mat = confusion_matrix_(Y, final_df.to_numpy(), df_option=True)
     print(mat)

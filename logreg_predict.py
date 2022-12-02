@@ -88,15 +88,15 @@ if __name__ == "__main__":
 
     models = load_models(export_path=model_path)
     # print(len(models))
-    print(models)
+    # print(models)
 
     datas = DataParserTest(data_path=data_path, features=models['features'], \
         target=models['target'], normalization=models['normalization'])
     print(datas.df.head(1))
-    print(datas.df.shape)
-    print(datas.df.head(1))
-    print(datas.X[0:5])
-    print(datas.X.shape)
+    # print(datas.df.shape)
+    # print(datas.df.head(1))
+    print(datas.X[0:1])
+    # print(datas.X.shape)
 
     ones = {}
     preds = {}
