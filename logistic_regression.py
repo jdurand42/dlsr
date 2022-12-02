@@ -109,9 +109,6 @@ class LogisticRegression():
 		return j.mean()
 
 	def score_(self, y, y_hat):
-		"""
-			gives r2 score
-		"""
 		eq = np.equal(y, y_hat)
 		count = 0
 		for i in range(0, len(eq)):

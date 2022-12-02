@@ -113,6 +113,14 @@ def confusion_matrix_(y_true, y_hat, labels=None, df_option=False):
 	return pd.DataFrame(mat, columns=labels, index=labels)
 
 
+def score_(y, y_hat):
+	eq = np.equal(y, y_hat)
+	count = 0
+	for i in range(0, len(eq)):
+		if y[i][0] == y_hat[i][0]:
+			count +=1
+	return count / len(y)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     data_path = args.file
@@ -141,6 +149,14 @@ if __name__ == "__main__":
     print(final_df.head(5))
 
     print_feature_importance(models, features)
+    
+    if datas.df[target].isnull().sum() > 0:
+        print(f"Dataset doesn't contains {target} values, skipping confusion matrix")
+        sys.exit(0)
+
+    
     Y = datas.df[target].to_numpy().reshape(datas.df[target].shape[0], 1)
+
+    print(f"Score: {score_(Y, final_df.to_numpy())}")
     mat = confusion_matrix_(Y, final_df.to_numpy(), df_option=True)
     print(mat)
