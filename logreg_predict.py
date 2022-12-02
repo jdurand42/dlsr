@@ -8,7 +8,7 @@ from datetime import datetime
 export_path = "./models/models"
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H:%M:%S")
-predictions_path = f"./predictions/prediction_{date_time}.csv"
+predictions_path = f"./predictions/houses.csv"
 
 def get_df(path):
     try:
@@ -116,6 +116,8 @@ if __name__ == "__main__":
         final_pred.append(best_key)
 
     final_df = pd.DataFrame({target: final_pred})
+    # print(final_df.keys())
+    final_df["Index"] = range(0, len(final_df))
+    final_df.set_index(["Index"], inplace=True)
     print(final_df.head())
-
-    final_df.to_csv(predictions_path)
+    final_df.to_csv(predictions_path, index=True, header=True)
