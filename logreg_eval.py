@@ -56,9 +56,7 @@ def print_feature_importance(models, features):
     t = np.absolute(models['houses'][houses[0]]['thetas'])
     for i in range(1, len(houses)):
         t = np.append(t, np.absolute(models['houses'][houses[i]]['thetas']), axis=1)
-    # print(t)
     t = t[1:].transpose()
-    # print(t)
     fig, ax = plt.subplots()
     X = np.arange(0, len(features))
     width = 0.2
@@ -113,7 +111,6 @@ def confusion_matrix_(y_true, y_hat, labels=None, df_option=False):
 	if df_option is False:
 		return mat
 	return pd.DataFrame(mat, columns=labels, index=labels)
-	# Df options true
 
 
 if __name__ == "__main__":

@@ -9,9 +9,8 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-# export_path = "./models/models"
-now = datetime.now()
-date_time = now.strftime("%m_%d_%Y_%H:%M:%S")
+# now = datetime.now()
+# date_time = now.strftime("%m_%d_%Y_%H:%M:%S")
 
 parser.add_argument('file', type=str, default='data/dataset_test.csv',
                     help='path to csv file containing data')
@@ -65,7 +64,6 @@ class DataParserTest:
             for feature in self.df[features]:
                 self.df[feature] = self.zscore_(self.df[feature].to_numpy(),normalization['stds'][feature], \
                     normalization['means'][feature])
-        # self.df = self.df.dropna(axis=0).reset_index(drop=True)
         self.X = self.df[features].to_numpy()
 
     def zscore_(self, x, std, mean):
@@ -84,7 +82,6 @@ def load_models(export_path):
 
 if __name__ == "__main__":
 
-    # data_path, model_path = parse_args()
     args = parser.parse_args()
     data_path = args.file
     models = load_models(export_path=args.models)
@@ -95,10 +92,7 @@ if __name__ == "__main__":
     datas = DataParserTest(data_path=data_path, features=models['features'], \
         target=models['target'], normalization=models['normalization'])
     print(datas.df.head(1))
-    # print(datas.df.shape)
-    # print(datas.df.head(1))
     print(datas.X[0:1])
-    # print(datas.X.shape)
 
     ones = {}
     preds = {}
@@ -111,14 +105,12 @@ if __name__ == "__main__":
     for i in range(0, len(datas.X)):
         best = -1
         for key in preds.keys():
-            # print(key, preds[key][i])
             if preds[key][i] > best:
                 best = preds[key][i]
                 best_key = key
         final_pred.append(best_key)
 
     final_df = pd.DataFrame({target: final_pred})
-    # print(final_df.keys())
     final_df["Index"] = range(0, len(final_df))
     final_df.set_index(["Index"], inplace=True)
     print(final_df.head())

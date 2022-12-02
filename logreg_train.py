@@ -26,7 +26,6 @@ def get_df(path):
         print(e)
         sys.exit(1)
 
-# A faire dans unconf.ini
 
 features = ['Herbology',
        'Defense Against the Dark Arts', 'Divination', 'Muggle Studies',
@@ -60,7 +59,6 @@ class DataParser:
         for col in self.df[features]:
             self.df[col] = self.df[col].fillna(value=self.df[col].mean())
 
-        # if normalize == True:
         self.get_stds_means()
 
         if test_split == False:
@@ -114,7 +112,6 @@ class DataParser:
 
     def label_one_vs_all(self, y, value):
         y = y.copy()
-        # print(y.head())
         for i in range(0, len(y)):
             if y[i] == value:
                 y[i] = 1
@@ -149,7 +146,6 @@ class OneVersusAll:
 
     def train_reg(self, early_stopping = None, prescision = 5):
         self.reg.fit_(self.datas.X_train, self.Y_train, early_stopping = early_stopping, prescision =prescision)
-        # print(self.reg.thetas)
         return self.reg
 
     def get_pred(self, X=None):
@@ -189,24 +185,8 @@ def export_models(ones, export_path):
     with open(export_path, "wb") as f:
         pickle.dump(ones, f)
 
-# def parse_args():
-#     try:
-#         data_path = sys.argv[1]
-#     except:
-#         data_path = "data/dataset_train.csv"
-
-#     return data_path
-
 def print_data_infos(datas):
-    # print(datas.df_train.head())
     print(datas.df.head(2))
-    # print(datas.df_Y_train.head())
-    # print(datas.X_train[0:2])
-    # print(datas.X_test[0:2])
-    # print(datas.X_train.shape)
-    # for key in datas.Ys_train.keys():
-        # print(key, datas.Ys_train[key][0:5])
-        # print(datas.Ys_train[key].shape)
 
 def print_test_split_infos(datas, y_labels=y_labels, target=target):
     print("Split ratio: ", datas.ratio)
@@ -218,8 +198,6 @@ def print_test_split_infos(datas, y_labels=y_labels, target=target):
         print(f"{y_labels[i]}: {len(datas.df_test[datas.df_test[target] == y_labels[i]])}")
 
 if __name__=="__main__":
-
-    # data_path, early_stopping = parse_args()
     args = parser.parse_args()
     print(args.file)
     datas = DataParser(data_train_path=args.file, \
@@ -232,7 +210,6 @@ if __name__=="__main__":
     y_labels=y_labels
 
     print_test_split_infos(datas, y_labels, target)
-    # sys.exit()
     preds = {}
     ones = {}
     ones['houses'] = {}
@@ -265,9 +242,7 @@ if __name__=="__main__":
         axs[0].plot(one.reg.losses)
         axs[1].plot(one.reg.r2s)
         print("-----------")
-    # print(preds)
-    
-    # plot graphs
+
     axs[0].set_ylabel('loss')
     axs[1].set_ylabel('r2')
     axs[1].set_xlabel('epochs')
@@ -275,25 +250,19 @@ if __name__=="__main__":
 
     plt.show()
 
-    # Tres tres moche
     final_pred = datas.df_Y_test.copy()
 
     for i in range(0, len(final_pred)):
         best = -1
         for key in preds.keys():
             if preds[key][i] > best:
-                # print(i)
                 best = preds[key][i]
                 best_key = key
-        # print(i, best_key)
         final_pred[i] = best_key
-    # best_key
     print(final_pred.head(2))
 
     b = final_pred.to_numpy()
-    # print(b)
     b2 = datas.df_Y_test.copy()
-    # print(b2)
 
     pos = 0
     for i in range(0,len(final_pred)):
@@ -301,5 +270,5 @@ if __name__=="__main__":
             pos += 1
     score = pos / len(final_pred)
     print(f"Score: {score}")
-    # print(f"Accuracy scikit learn: {accuracy_score(b2 ,final_pred)}")
+
     export_models(models, args.export_path)
