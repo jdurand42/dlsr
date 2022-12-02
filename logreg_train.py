@@ -9,12 +9,14 @@ import argparse
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-f','--file', type=str, default='data/dataset_train.csv',
+parser.add_argument('file', type=str, default='data/dataset_train.csv',
                     help='path to csv file containing data')
 parser.add_argument('-e','--early_stopping', type=int, default = None,
                     help='number of epochs needed for early stopping')
 parser.add_argument('-p','--prescision', type=int, default = 5,
                     help='prescision for early stopping')
+parser.add_argument('--export_path', type=str, default = "models/models.pkl",
+                    help='Output path for model pkl')
  
 def get_df(path):
     try:
@@ -183,8 +185,8 @@ def get_x(df, features, target):
     X = df[features].to_numpy()
     return X
 
-def export_models(ones, export_path=export_path):
-    with open(f"{export_path}/models", "wb") as f:
+def export_models(ones, export_path):
+    with open(export_path, "wb") as f:
         pickle.dump(ones, f)
 
 # def parse_args():
@@ -219,6 +221,7 @@ if __name__=="__main__":
 
     # data_path, early_stopping = parse_args()
     args = parser.parse_args()
+    print(args.file)
     datas = DataParser(data_train_path=args.file, \
                         test_split=True, \
                         ratio=0.8, \
@@ -299,4 +302,4 @@ if __name__=="__main__":
     score = pos / len(final_pred)
     print(f"Score: {score}")
     # print(f"Accuracy scikit learn: {accuracy_score(b2 ,final_pred)}")
-    export_models(models)
+    export_models(models, args.export_path)

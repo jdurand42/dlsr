@@ -5,10 +5,21 @@ import pickle
 from logistic_regression import LogisticRegression
 from datetime import datetime
 
-export_path = "./models/models"
+import argparse
+
+parser = argparse.ArgumentParser()
+
+# export_path = "./models/models"
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H:%M:%S")
-predictions_path = f"./predictions/houses.csv"
+
+parser.add_argument('file', type=str, default='data/dataset_test.csv',
+                    help='path to csv file containing data')
+parser.add_argument('models', type=str, default = "models/models.pkl",
+                    help='path of file containing model.pkl')
+parser.add_argument('-p','--predictions_path', type=str, default="./predictions/houses.csv",
+                    help='Prediction path for output')
+ 
 
 def get_df(path):
     try:
@@ -62,7 +73,7 @@ class DataParserTest:
 	    return x_prime
 
 
-def load_models(export_path=export_path):
+def load_models(export_path):
     try:
         with open(f"{export_path}", "rb") as f:
             ones = pickle.load(f)
@@ -71,22 +82,13 @@ def load_models(export_path=export_path):
         print(e)
         sys.exit(1)
 
-def parse_args():
-    try:
-        data_path = sys.argv[1]
-    except:
-        data_path = "data/dataset_test.csv"
-    try:
-        model_path = sys.argv[2]
-    except:
-        model_path = export_path
-    return data_path, model_path
-
 if __name__ == "__main__":
 
-    data_path, model_path = parse_args()
-
-    models = load_models(export_path=model_path)
+    # data_path, model_path = parse_args()
+    args = parser.parse_args()
+    data_path = args.file
+    models = load_models(export_path=args.models)
+    predictions_path = args.predictions_path
     # print(len(models))
     # print(models)
 
@@ -120,4 +122,4 @@ if __name__ == "__main__":
     final_df["Index"] = range(0, len(final_df))
     final_df.set_index(["Index"], inplace=True)
     print(final_df.head())
-    final_df.to_csv(predictions_path, index=True, header=True)
+    final_df.to_csv(predictions_path, index=True)

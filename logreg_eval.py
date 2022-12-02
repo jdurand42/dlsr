@@ -16,11 +16,15 @@ from datetime import datetime
 import matplotlib
 import matplotlib.pyplot as plt
 
-export_path = "./models/models"
-now = datetime.now()
-date_time = now.strftime("%m_%d_%Y_%H:%M:%S")
-eval_data_path="data/eval/test.csv"
+import argparse
 
+parser = argparse.ArgumentParser()
+
+parser.add_argument('file', type=str, default='data/eval/test.csv',
+                    help='path to csv file test split containing data')
+parser.add_argument('models', type=str, default = "models/models.pkl",
+                    help='path of file containing model.pkl')
+ 
 def get_df(path):
     try:
         df = pd.read_csv(path)
@@ -38,25 +42,14 @@ target = 'Hogwarts House'
 
 y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 
-def load_models(export_path=export_path):
+def load_models(export_path):
     try:
-        with open(f"{export_path}", "rb") as f:
+        with open(export_path, "rb") as f:
             ones = pickle.load(f)
         return ones
     except Exception as e:
         print(e)
         sys.exit(1)
-
-def parse_args():
-    try:
-        data_path = sys.argv[1]
-    except:
-        data_path = eval_data_path
-    try:
-        model_path = sys.argv[2]
-    except:
-        model_path = export_path
-    return data_path, model_path
 
 def print_feature_importance(models, features):
     houses = list(models['houses'].keys())
@@ -124,19 +117,12 @@ def confusion_matrix_(y_true, y_hat, labels=None, df_option=False):
 
 
 if __name__ == "__main__":
-
-    data_path, model_path = parse_args()
-
-    models = load_models(export_path=model_path)
-    # print(models)
+    args = parser.parse_args()
+    data_path = args.file
+    models = load_models(args.models)
 
     datas = DataParserTest(data_path=data_path, features=models['features'], \
         target=models['target'], normalization=models['normalization'])
-    # print(datas.df.head())
-    # print(datas.df.shape)
-    # print(datas.df.head())
-    # print(datas.X[0:5])
-    # print(datas.X.shape)
 
     ones = {}
     preds = {}
@@ -158,9 +144,6 @@ if __name__ == "__main__":
     print(final_df.head(5))
 
     print_feature_importance(models, features)
-    # print(datas.df[target].shape, final_df.to_numpy().shape)
     Y = datas.df[target].to_numpy().reshape(datas.df[target].shape[0], 1)
     mat = confusion_matrix_(Y, final_df.to_numpy(), df_option=True)
     print(mat)
-
-    # final_df.to_csv(predictions_path)
