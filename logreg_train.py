@@ -96,13 +96,21 @@ class DataParser:
         x_prime = (x - mean) / std
         return x_prime
 
+    def _split_(self, ratio):
+        train = []
+        for i in self.df[self.target].unique():
+            train.extend(self.df[self.df[self.target] == i].sample(frac=ratio).index)
+        return train
+
     def split_df(self, ratio):
         if ratio == None:
             ratio = 0.8
-        split = self.df.sample(frac=ratio)
-        rest = self.df.drop(split.index)
+        index = self._split_(ratio)
+        split = self.df.loc[index]
+        rest = self.df.drop(index)
         self.df_train= split.reset_index()
         self.df_test = rest.reset_index()
+
 
     def get_Ys(self, Y_ori):
         b = {}
