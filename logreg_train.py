@@ -17,6 +17,8 @@ parser.add_argument('-p','--prescision', type=int, default = 5,
                     help='prescision for early stopping')
 parser.add_argument('--export_path', type=str, default = "models/models.pkl",
                     help='Output path for model pkl')
+parser.add_argument('--split', type=float, default = False,
+                    help='Output path for model pkl')
  
 def get_df(path):
     try:
@@ -41,7 +43,7 @@ eval_data_path = "data/eval/test.csv"
 
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
-                    test_split=False, ratio=None, y_labels=y_labels, normalize=False):
+                    test_split=False, ratio=False, y_labels=y_labels, normalize=False):
         self.features = features
         self.target = target
         self.y_labels = y_labels
@@ -62,10 +64,11 @@ class DataParser:
         self.get_stds_means()
 
         if test_split == False:
-            self.df_train = self.df
-            self.df_test = self.df
+            print("la")
+            self.df_train = self.df.copy()
+            self.df_test = self.df.copy()
         else:
-            self.split_df(ratio=ratio)
+            self.split_df(ratio=self.ratio)
 
         self.df_test[self.features+[self.target]].to_csv(eval_data_path)
 
@@ -103,8 +106,6 @@ class DataParser:
         return train
 
     def split_df(self, ratio):
-        if ratio == None:
-            ratio = 0.8
         index = self._split_(ratio)
         split = self.df.loc[index]
         rest = self.df.drop(index)
@@ -209,8 +210,8 @@ if __name__=="__main__":
     args = parser.parse_args()
     print(args.file)
     datas = DataParser(data_train_path=args.file, \
-                        test_split=True, \
-                        ratio=0.8, \
+                        test_split=args.split, \
+                        ratio=args.split, \
                         normalize=True,
                         )
     print_data_infos(datas)
