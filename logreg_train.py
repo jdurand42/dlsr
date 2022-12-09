@@ -6,6 +6,7 @@ from logistic_regression import LogisticRegression
 from TinyStatistician import TinyStatistician as Ts
 import matplotlib.pyplot as plt
 import argparse
+import os
 
 parser = argparse.ArgumentParser()
 
@@ -39,7 +40,10 @@ target = 'Hogwarts House'
 y_labels=["Ravenclaw", "Slytherin", "Gryffindor", "Hufflepuff"]
 
 export_path = "./models/"
+eval_folder = "data/eval"
 eval_data_path = "data/eval/test.csv"
+os.makedirs(eval_folder, exist_ok=True)
+os.makedirs(export_path, exist_ok=True)
 
 class DataParser:
     def __init__(self, data_train_path="data/dataset_train.csv", features=features, target=target, \
@@ -70,6 +74,7 @@ class DataParser:
         else:
             self.split_df(ratio=self.ratio)
 
+        
         self.df_test[self.features+[self.target]].to_csv(eval_data_path)
 
         if normalize == True:

@@ -4,6 +4,7 @@ import sys
 import pickle
 from logistic_regression import LogisticRegression
 from datetime import datetime
+import os
 
 import argparse
 
@@ -16,9 +17,11 @@ parser.add_argument('file', type=str, default='data/dataset_test.csv',
                     help='path to csv file containing data')
 parser.add_argument('models', type=str, default = "models/models.pkl",
                     help='path of file containing model.pkl')
-parser.add_argument('-p','--predictions_path', type=str, default="./predictions/houses.csv",
-                    help='Prediction path for output')
- 
+
+predictions_folder = "./predictions/"
+predictions_path = f"{predictions_folder}/houses.csv"
+os.makedirs(predictions_folder, exist_ok=True)
+
 
 def get_df(path):
     try:
@@ -85,7 +88,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     data_path = args.file
     models = load_models(export_path=args.models)
-    predictions_path = args.predictions_path
+    predictions_path = predictions_path
     # print(len(models))
     # print(models)
 
