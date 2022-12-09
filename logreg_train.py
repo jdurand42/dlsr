@@ -68,10 +68,12 @@ class DataParser:
         self.get_stds_means()
 
         if test_split == False:
-            print("la")
             self.df_train = self.df.copy()
             self.df_test = self.df.copy()
         else:
+            if isinstance(test_split, float) == False or test_split >= 1 or test_split < 0:
+                print("Error: split ratio must be 0 <= ratio < 1.")
+                sys.exit(1)  
             self.split_df(ratio=self.ratio)
 
         
